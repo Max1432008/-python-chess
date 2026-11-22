@@ -42,6 +42,23 @@ class Spielfeld:
         print("      _____________________________ ")   
         print("      A | B | C | D | E | F | G | H")   
 
+    def move_figure(self, start_pos, end_pos):
+        start_row, start_col = start_pos
+        end_row, end_col = end_pos
+
+        figure = self.felder[start_row][start_col]
+
+        self.felder[start_row][start_col] = 0
+        self.felder[end_row][end_col] = figure
+
+        figure.position = end_pos
+
+        
+
+        
+
+
+
 class Figure:
     def __init__(self, name, position, color):
         self.name = name
@@ -74,11 +91,34 @@ class King(Figure):
     pass
 
 
+
 def sort_input(eingabe, figur):
+
+    eingabe = eingabe.strip()
+
+    if len(eingabe) != 2:
+        print("Ungültiges Feld!")
+        return None
+
+    if not eingabe[0].isalpha() or not eingabe[1].isdigit():
+        print ("Ungültiges Feld")
+        return None
+    
+
+
     buchstaben = "".join(zeichen for zeichen in eingabe if zeichen.isalpha())
     zahlen = "".join(zeichen for zeichen in eingabe if zeichen.isdigit())
 
-    return {"string": buchstaben, "number": zahlen, "figure": figur}
+
+    number_bu = ord(buchstaben) - 65
+    number = 8 - int(zahlen)
+
+    if number_bu < 0 or number_bu > 7 or number < 0 or number > 7:
+        print("Ungültiges Feld")
+        return None
+
+    print (number, number_bu)
+    return (number, number_bu)
 
 
 def game():
@@ -145,11 +185,15 @@ def game():
             print("Ungültige Eingabe. Bitte wähle eine Zahl zwischen 1 und 6.")
             continue
 
-        print(f"{current_player} ist am Zug!")
-        eingabe = input(f"{current_player} gib dein Zug ein!")
-        Zug = sort_input(eingabe, figur)
+        start_pos = sort_input(input("Startfeld: "), figur)
+        end_pos = sort_input(input("Endfeld: "), figur)
+        if start_pos is None or end_pos is None:
+            continue
 
-        print(f"{current_player} hat {Zug['figure']} auf {Zug['string']}{Zug['number']} gezogen!")
+        print(f"{current_player} ist am Zug!")
+        
+        brett.move_figure(start_pos, end_pos)
+
 
         brett.print_board()
         print ("––––––––––––––––––––––––––––––––––––––––––––––––")
