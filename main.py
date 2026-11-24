@@ -35,6 +35,10 @@ class Spielfeld:
         ] # Schachbrett
 
     def print_board(self):
+        print("      A | B | C | D | E | F | G | H")   
+        print("      _____________________________ ")   
+
+
         for zahl, reihe in zip(range(9, 0, -1), self.felder):
                 Liste = [str(row) for row in reihe]
                 print(zahl - 1, "#  ", " | ".join(Liste)) 
@@ -48,10 +52,28 @@ class Spielfeld:
 
         figure = self.felder[start_row][start_col]
 
+        if figure == 0:
+            print("Auf diesem Feld steht keine Figur!")
+            return False
+
+        moves = figure.possible_moves(self)
+
+        if not moves:
+            print("Keine gültigen Züge für diese Figur!")
+            return False
+
+
+        if end_pos not in moves:
+            print("Ungültiger Zug!")
+            return False
+
         self.felder[start_row][start_col] = 0
         self.felder[end_row][end_col] = figure
 
         figure.position = end_pos
+
+
+        
 
         
 
@@ -71,24 +93,158 @@ class Figure:
     def possible_moves(self, board):
         pass
 
+    def calculate_moves(self, board, moves):
+        row, col = self.position
+        possible = []
+
+        for row_offset, col_offset in moves:
+            new_row = row + row_offset
+            new_col = col + col_offset
+
+            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                target = board.felder[new_row][new_col]
+
+                if target == 0 or target.color != self.color:
+                    possible.append((new_row, new_col))
+
+        return possible
+
+
+
+
+    def calculate_sliding_moves(self, board, directions):
+        row, col = self.position
+        possible = []
+
+        for row_offset, col_offset in directions:
+
+            for k in range(1, 8):
+
+                new_row = row + k * row_offset
+                new_col = col + k * col_offset
+
+
+                if 0 <= new_row < 8 and 0 <= new_col < 8:
+                    target = board.felder[new_row][new_col]
+
+
+                    if target == 0:
+                        possible.append((new_row, new_col))
+
+                    elif target.color != self.color:
+                        possible.append((new_row, new_col))
+                        break
+
+                    else:
+                        break
+
+                else: 
+                    break
+
+        return possible
+
+
+
+
 
 class Pawn(Figure):
-    pass
+    def possible_moves(self, board):
+        row, col = self.position
+        possible = []
+
+        direction = -1 if self.color == "white" else 1
+        start_row = 6 if self.color == "white" else 1
+        next_row = row + direction
+
+        # Ein Feld vorwärts
+        if 0 <= next_row < 8 and board.felder[next_row][col] == 0:
+            possible.append((next_row, col))
+
+            # Zwei Felder vorwärts: nur von der Startreihe
+            # und wenn beide Felder frei sind.
+            two_rows = row + 2 * direction
+            if (
+                row == start_row
+                and board.felder[two_rows][col] == 0
+            ):
+                possible.append((two_rows, col))
+
+        # Diagonal schlagen
+        for col_offset in (-1, 1):
+            target_col = col + col_offset
+
+            if 0 <= next_row < 8 and 0 <= target_col < 8:
+                target = board.felder[next_row][target_col]
+
+                if target != 0 and target.color != self.color:
+                    possible.append((next_row, target_col))
+
+        return possible
+                
 
 class Rook(Figure):
-    pass
+    def possible_moves(self, board):
+        row, col = self.position
+
+        moves = [
+            (-1, 0), (1, 0),
+            (0, -1), (0, 1)
+        ]
+        
+        return self.calculate_sliding_moves(board, moves)
 
 class Knight(Figure):
-    pass
+    def possible_moves(self, board):
+
+        moves = [
+            (-2, -1),
+            (-2,  1),
+            ( 2, -1),
+            ( 2,  1),
+            (-1, -2),
+            (-1,  2),
+            ( 1, -2),
+            ( 1,  2)
+        ]
+        return self.calculate_moves(board, moves)
+
+
 
 class Bishop(Figure):
-    pass
+    def possible_moves(self, board):
+
+        moves = [
+            (-1, -1), (-1, 1),
+            (1, -1), (1, 1)
+        ]
+    
+        return self.calculate_sliding_moves(board, moves)
 
 class Queen(Figure):
-    pass
+    def possible_moves(self, board):
+        row, col = self.position
+
+        moves = [
+            (-1, 0), (1, 0),
+            (0, -1), (0, 1),
+            (-1, -1), (-1, 1),
+            (1, -1), (1, 1)]
+
+        return self.calculate_sliding_moves(board, moves)
+        
+
 
 class King(Figure):
-    pass
+    def possible_moves(self, board):
+
+        moves = [
+            (-1, 0), (1, 0),
+            (0, -1), (0, 1),
+            (-1, -1), (-1, 1),
+            (1, -1), (1, 1)
+        ]
+        return self.calculate_moves(board, moves)
+
 
 
 
@@ -192,14 +348,22 @@ def game():
 
         print(f"{current_player} ist am Zug!")
         
-        brett.move_figure(start_pos, end_pos)
+        isValidMove = brett.move_figure(start_pos, end_pos)
+
+        if isValidMove is None:
+            print("Ungültiger Zug. Bitte versuche es erneut.")
+            continue
+
+        else: 
+            current_player = "black" if current_player == "white" else "white"
+
+
 
 
         brett.print_board()
         print ("––––––––––––––––––––––––––––––––––––––––––––––––")
-        print ("––––––––––––––––––––––––––––––––––––––––––––––––")
+        print ("––––––––––––––––––––––––––––––––––━━━━━━━━━━━━━━")
 
         
-        current_player = "black" if current_player == "white" else "white"
 
 game()
